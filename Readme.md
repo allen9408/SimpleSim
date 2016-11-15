@@ -1,3 +1,3 @@
 ##Simple Scalar Project
-<center>Weiqing Ni</center>
-<center>Comp Arch</center>
+<center>Weiqing Ni</center>  
+<center>Comp Arch</center>  
