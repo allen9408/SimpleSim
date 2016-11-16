@@ -56,4 +56,10 @@
 + regs.h 
   + regs_creste
   + regs_init
-+ ​
++ bpred.h
+  + bpred_create()
+  + bpred_lookup()
+  + bpred_update()
+
+## Create my own simulators
+
