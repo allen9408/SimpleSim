@@ -277,6 +277,7 @@ CFLAGS = $(MFLAGS) $(FFLAGS) $(OFLAGS) $(BINUTILS_INC) $(BINUTILS_LIB)
 #
 # all the sources
 #
+# Add sim_test.c
 SRCS =	main.c sim-fast.c sim-safe.c sim-cache.c sim-profile.c \
 	sim-eio.c sim-bpred.c sim-cheetah.c sim-outorder.c \
 	memory.c regs.c cache.c bpred.c ptrace.c eventq.c \
@@ -285,7 +286,8 @@ SRCS =	main.c sim-fast.c sim-safe.c sim-cache.c sim-profile.c \
 	target-pisa/pisa.c target-pisa/loader.c target-pisa/syscall.c \
 	target-pisa/symbol.c \
 	target-alpha/alpha.c target-alpha/loader.c target-alpha/syscall.c \
-	target-alpha/symbol.c
+	target-alpha/symbol.c \
+	sim_test.c
 
 HDRS =	syscall.h memory.h regs.h sim.h loader.h cache.h bpred.h ptrace.h \
 	eventq.h resource.h endian.h dlite.h symbol.h eval.h bitmap.h \
@@ -305,7 +307,9 @@ OBJS =	main.$(OEXT) syscall.$(OEXT) memory.$(OEXT) regs.$(OEXT) \
 #
 # programs to build
 #
+# Add sim_test.$(EEXT)
 PROGS = sim-fast$(EEXT) sim-safe$(EEXT) sim-eio$(EEXT) \
+	sim_test$(EEXT) \
 	sim-bpred$(EEXT) sim-profile$(EEXT) \
 	sim-cache$(EEXT) sim-outorder$(EEXT) # sim-cheetah$(EEXT)
 
@@ -371,6 +375,9 @@ sysprobe$(EEXT):	sysprobe.c
 
 sim-fast$(EEXT):	sysprobe$(EEXT) sim-fast.$(OEXT) $(OBJS) libexo/libexo.$(LEXT)
 	$(CC) -o sim-fast$(EEXT) $(CFLAGS) sim-fast.$(OEXT) $(OBJS) libexo/libexo.$(LEXT) $(MLIBS)
+# Add sim_test
+sim_test$(EEXT):	sysprobe$(EEXT) sim_test.$(OEXT) $(OBJS) libexo/libexo.$(LEXT)
+	$(CC) -o sim_test$(EEXT) $(CFLAGS) sim_test.$(OEXT) $(OBJS) libexo/libexo.$(LEXT) $(MLIBS)
 
 sim-safe$(EEXT):	sysprobe$(EEXT) sim-safe.$(OEXT) $(OBJS) libexo/libexo.$(LEXT)
 	$(CC) -o sim-safe$(EEXT) $(CFLAGS) sim-safe.$(OEXT) $(OBJS) libexo/libexo.$(LEXT) $(MLIBS)
@@ -467,11 +474,13 @@ depend:
 
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
-
 main.$(OEXT): host.h misc.h machine.h machine.def endian.h version.h dlite.h
 main.$(OEXT): regs.h memory.h options.h stats.h eval.h loader.h sim.h
 sim-fast.$(OEXT): host.h misc.h machine.h machine.def regs.h memory.h
 sim-fast.$(OEXT): options.h stats.h eval.h loader.h syscall.h dlite.h sim.h
+# Add sim_test
+sim_test.$(OEXT): host.h misc.h machine.h machine.def regs.h memory.h
+sim_test.$(OEXT): options.h stats.h eval.h loader.h syscall.h dlite.h sim.h
 sim-safe.$(OEXT): host.h misc.h machine.h machine.def regs.h memory.h
 sim-safe.$(OEXT): options.h stats.h eval.h loader.h syscall.h dlite.h sim.h
 sim-cache.$(OEXT): host.h misc.h machine.h machine.def regs.h memory.h
