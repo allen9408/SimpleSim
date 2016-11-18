@@ -104,6 +104,7 @@ enum bpred_class {
   BPred2bit,			/* 2-bit saturating cntr pred (dir mapped) */
   BPredTaken,			/* static predict taken */
   BPredNotTaken,		/* static predict not taken */
+  BPredHash,    /* hash predictor*/
   BPred_NUM
 };
 
@@ -131,6 +132,10 @@ struct bpred_dir_t {
       int *shiftregs;		/* level-1 history table */
       unsigned char *l2table;	/* level-2 prediction state table */
     } two;
+    struct {
+      int hasize; /* Hash table size */
+      unsigned char *hatable; /* prediction state table */
+    } ha;
   } config;
 };
 
@@ -141,6 +146,8 @@ struct bpred_t {
     struct bpred_dir_t *bimod;	  /* first direction predictor */
     struct bpred_dir_t *twolev;	  /* second direction predictor */
     struct bpred_dir_t *meta;	  /* meta predictor */
+    /* Add new element in sturct bpred_t */
+    struct bpred_dir_t *hash;   /* hash predictor */
   } dirpred;
 
   struct {
