@@ -277,7 +277,7 @@ CFLAGS = $(MFLAGS) $(FFLAGS) $(OFLAGS) $(BINUTILS_INC) $(BINUTILS_LIB)
 #
 # all the sources
 #
-# Add sim_test.c
+# Add sim_taken.c
 SRCS =	main.c sim-fast.c sim-safe.c sim-cache.c sim-profile.c \
 	sim-eio.c sim-bpred.c sim-cheetah.c sim-outorder.c \
 	memory.c regs.c cache.c bpred.c ptrace.c eventq.c \
@@ -287,7 +287,7 @@ SRCS =	main.c sim-fast.c sim-safe.c sim-cache.c sim-profile.c \
 	target-pisa/symbol.c \
 	target-alpha/alpha.c target-alpha/loader.c target-alpha/syscall.c \
 	target-alpha/symbol.c \
-	sim_test.c
+	sim_taken.c
 
 HDRS =	syscall.h memory.h regs.h sim.h loader.h cache.h bpred.h ptrace.h \
 	eventq.h resource.h endian.h dlite.h symbol.h eval.h bitmap.h \
@@ -307,11 +307,12 @@ OBJS =	main.$(OEXT) syscall.$(OEXT) memory.$(OEXT) regs.$(OEXT) \
 #
 # programs to build
 #
-# Add sim_test.$(EEXT)
+# Add sim_taken.$(EEXT)
 PROGS = sim-fast$(EEXT) sim-safe$(EEXT) sim-eio$(EEXT) \
-	sim_test$(EEXT) \
 	sim-bpred$(EEXT) sim-profile$(EEXT) \
-	sim-cache$(EEXT) sim-outorder$(EEXT) # sim-cheetah$(EEXT)
+	sim_taken$(EEXT) \
+	sim-cache$(EEXT) sim-outorder$(EEXT) # sim-cheetah$(EEXT) \
+
 
 #
 # all targets, NOTE: library ordering is important...
@@ -375,9 +376,13 @@ sysprobe$(EEXT):	sysprobe.c
 
 sim-fast$(EEXT):	sysprobe$(EEXT) sim-fast.$(OEXT) $(OBJS) libexo/libexo.$(LEXT)
 	$(CC) -o sim-fast$(EEXT) $(CFLAGS) sim-fast.$(OEXT) $(OBJS) libexo/libexo.$(LEXT) $(MLIBS)
-# Add sim_test
-sim_test$(EEXT):	sysprobe$(EEXT) sim_test.$(OEXT) $(OBJS) libexo/libexo.$(LEXT)
-	$(CC) -o sim_test$(EEXT) $(CFLAGS) sim_test.$(OEXT) $(OBJS) libexo/libexo.$(LEXT) $(MLIBS)
+
+sim-bpred$(EEXT):	sysprobe$(EEXT) sim-bpred.$(OEXT) bpred.$(OEXT) $(OBJS) libexo/libexo.$(LEXT)
+	$(CC) -o sim-bpred$(EEXT) $(CFLAGS) sim-bpred.$(OEXT) bpred.$(OEXT) $(OBJS) libexo/libexo.$(LEXT) $(MLIBS)
+
+# Add sim_taken
+sim_taken$(EEXT):	sysprobe$(EEXT) sim_taken.$(OEXT) bpred.$(OEXT) $(OBJS) libexo/libexo.$(LEXT)
+	$(CC) -o sim_taken$(EEXT) $(CFLAGS) sim_taken.$(OEXT) bpred.$(OEXT) $(OBJS) libexo/libexo.$(LEXT) $(MLIBS)
 
 sim-safe$(EEXT):	sysprobe$(EEXT) sim-safe.$(OEXT) $(OBJS) libexo/libexo.$(LEXT)
 	$(CC) -o sim-safe$(EEXT) $(CFLAGS) sim-safe.$(OEXT) $(OBJS) libexo/libexo.$(LEXT) $(MLIBS)
@@ -388,8 +393,6 @@ sim-profile$(EEXT):	sysprobe$(EEXT) sim-profile.$(OEXT) $(OBJS) libexo/libexo.$(
 sim-eio$(EEXT):	sysprobe$(EEXT) sim-eio.$(OEXT) $(OBJS) libexo/libexo.$(LEXT)
 	$(CC) -o sim-eio$(EEXT) $(CFLAGS) sim-eio.$(OEXT) $(OBJS) libexo/libexo.$(LEXT) $(MLIBS)
 
-sim-bpred$(EEXT):	sysprobe$(EEXT) sim-bpred.$(OEXT) bpred.$(OEXT) $(OBJS) libexo/libexo.$(LEXT)
-	$(CC) -o sim-bpred$(EEXT) $(CFLAGS) sim-bpred.$(OEXT) bpred.$(OEXT) $(OBJS) libexo/libexo.$(LEXT) $(MLIBS)
 
 sim-cheetah$(EEXT):	sysprobe$(EEXT) sim-cheetah.$(OEXT) $(OBJS) libcheetah/libcheetah.$(LEXT) libexo/libexo.$(LEXT)
 	$(CC) -o sim-cheetah$(EEXT) $(CFLAGS) sim-cheetah.$(OEXT) $(OBJS) libcheetah/libcheetah.$(LEXT) libexo/libexo.$(LEXT) $(MLIBS)
@@ -478,9 +481,10 @@ main.$(OEXT): host.h misc.h machine.h machine.def endian.h version.h dlite.h
 main.$(OEXT): regs.h memory.h options.h stats.h eval.h loader.h sim.h
 sim-fast.$(OEXT): host.h misc.h machine.h machine.def regs.h memory.h
 sim-fast.$(OEXT): options.h stats.h eval.h loader.h syscall.h dlite.h sim.h
-# Add sim_test
-sim_test.$(OEXT): host.h misc.h machine.h machine.def regs.h memory.h
-sim_test.$(OEXT): options.h stats.h eval.h loader.h syscall.h dlite.h sim.h
+# Add sim_taken
+sim_taken.$(OEXT): host.h misc.h machine.h machine.def regs.h memory.h
+sim_taken.$(OEXT): options.h stats.h eval.h loader.h syscall.h dlite.h
+sim_taken.$(OEXT): bpred.h sim.h
 sim-safe.$(OEXT): host.h misc.h machine.h machine.def regs.h memory.h
 sim-safe.$(OEXT): options.h stats.h eval.h loader.h syscall.h dlite.h sim.h
 sim-cache.$(OEXT): host.h misc.h machine.h machine.def regs.h memory.h
