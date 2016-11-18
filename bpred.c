@@ -107,12 +107,17 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
   case BPred2bit:
     pred->dirpred.bimod = 
       bpred_dir_create(class, bimod_size, 0, 0, 0);
-
+    /* New break for insure */
+    break;
   case BPredTaken:
   case BPredNotTaken:
     /* no other state */
     break;
-
+  /* Add new case: BPredHash */
+  case BPredHash:
+    pred->dirpred.hash = 
+      bpred_dir_create(class, bimod_size, 0, 0, 0);
+    break;
   default:
     panic("bogus predictor class");
   }
@@ -166,6 +171,8 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
 
   case BPredTaken:
   case BPredNotTaken:
+  /* Add new case */
+  case BPredHash:
     /* no other state */
     break;
 
@@ -251,6 +258,17 @@ bpred_dir_create (
 
     break;
 
+  /* Add Hash case*/
+  case BPredHash:
+    if (!l1size || (l1size & (l1size-1)) != 0) {
+      fatal("table size must be non zero and a power of 2");
+    }
+    pred_dir->config.ha.hasize = l1size;
+    if (!(pred_dir->config.ha.hatable = calloc(l1size, sizeof(int)))) {
+      fatal("cannot allocate hash size table");
+    }  
+
+    break;
   case BPredTaken:
   case BPredNotTaken:
     /* no other state */
@@ -290,7 +308,9 @@ bpred_dir_config(
   case BPredNotTaken:
     fprintf(stream, "pred_dir: %s: predict not taken\n", name);
     break;
-
+  case BPredHash:
+    fprintf(stream, "pred_dir: %s: predict with %d entries\n", name, pred_dir->config.ha.hasize);
+    break;
   default:
     panic("bogus branch direction predictor class");
   }
@@ -330,6 +350,10 @@ bpred_config(struct bpred_t *pred,	/* branch predictor instance */
     break;
   case BPredNotTaken:
     bpred_dir_config (pred->dirpred.bimod, "nottaken", stream);
+    break;
+  /* Add new case here */
+  case BPredHash:
+    bpred_dir_config (pred->dirpred.hash, "hash", stream);
     break;
 
   default:
