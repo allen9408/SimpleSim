@@ -397,6 +397,10 @@ bpred_reg_stats(struct bpred_t *pred,	/* branch predictor instance */
     case BPredNotTaken:
       name = "bpred_nottaken";
       break;
+    /* Add new case */
+    case BPredHash:
+      name = "bpred_hash";
+    break;
     default:
       panic("bogus branch predictor class");
     }
