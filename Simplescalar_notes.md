@@ -63,3 +63,11 @@
 
 ## Create my own simulators
 
++ Bpred.[hc]
+  + Add new case in bpred_create()
+  + Add new element in bpred_t
+  + Add new element in bored_class{} enum
+  + Add new struct in bpred_dir_t{}
+  + Add new case in bored_dir_t()
+  + **optional**: Add case in bpred_dir_config()/bpred_config()
+
