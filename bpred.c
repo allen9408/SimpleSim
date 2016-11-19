@@ -171,9 +171,14 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
 
   case BPredTaken:
   case BPredNotTaken:
+    break;
   /* Add new case */
   case BPredHash:
-    /* no other state */
+    if (!bimod_size || (bimod_size & (bimod_size-1)) != 0)
+      fatal("number of hash table must be non-zero and a power of two");
+    pred->btb.sets = bimod_size;
+    if (!(pred->btb.btb_data = calloc(bimod_size, sizeof(struct bpred_btb_ent_t))))
+      fatal("cannot allocate BTB");
     break;
 
   default:
@@ -561,6 +566,14 @@ bpred_dir_lookup(struct bpred_dir_t *pred_dir,	/* branch dir predictor inst */
     case BPred2bit:
       p = &pred_dir->config.bimod.table[BIMOD_HASH(pred_dir, baddr)];
       break;
+    /* Add new case */
+    case BPredHash:
+    {
+      int hash_addr;
+      hash_addr = baddr ^ (pred_dir->config.ha.hasize - 1);
+      p = &pred_dir->config.ha.hatable[hash_addr];
+    }
+      break;
     case BPredTaken:
     case BPredNotTaken:
       break;
@@ -644,6 +657,12 @@ bpred_lookup(struct bpred_t *pred,	/* branch predictor instance */
 	    bpred_dir_lookup (pred->dirpred.bimod, baddr);
 	}
       break;
+    /* Add new case*/
+    case BPredHash:
+      if ((MD_OP_FLAGS(op) & (F_CTRL|F_UNCOND)) != (F_CTRL|F_UNCOND)) {
+        dir_update_ptr->pdir1 = bpred_dir_lookup(pred->dirpred.hash, baddr);
+      }
+      break;
     case BPredTaken:
       return btarget;
     case BPredNotTaken:
@@ -695,6 +714,19 @@ bpred_lookup(struct bpred_t *pred,	/* branch predictor instance */
 #endif /* !RAS_BUG_COMPATIBLE */
   
   /* not a return. Get a pointer into the BTB */
+/* New condition for hash class*/
+  if (pred->class == BPredHash){
+    index = baddr ^ (pred->btb.sets - 1);
+    /* look for a PC match*/
+    if (pred->btb.btb_data[index].addr == baddr) {
+      /* match */
+      pbtb = &pred->btb.btb_data[index];
+    } else {
+      pbtb = NULL;
+    }
+
+  } else {
+  /************* origin code *****************/
   index = (baddr >> MD_BR_SHIFT) & (pred->btb.sets - 1);
 
   if (pred->btb.assoc > 1)
@@ -716,6 +748,7 @@ bpred_lookup(struct bpred_t *pred,	/* branch predictor instance */
       if (pbtb->addr != baddr)
 	pbtb = NULL;
     }
+  }
 
   /*
    * We now also have a pointer into the BTB for a hit, or NULL otherwise
@@ -867,10 +900,22 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
       pred->dirpred.twolev->config.two.shiftregs[l1index] =
 	shift_reg & ((1 << pred->dirpred.twolev->config.two.shift_width) - 1);
     }
+  /* Add new case */
+  /*if ((MD_OP_FLAGS(op) & (F_CTRL|F_UNCOND)) != (F_CTRL|F_UNCOND) &&
+      (pred->class == BPredHash)) {
+    l1index = baddr ^ (pred->btb.sets - 1);
+  }*/
 
   /* find BTB entry if it's a taken branch (don't allocate for non-taken) */
   if (taken)
     {
+      /* for hash case*/
+      if (pred->class == BPredHash){
+        index = baddr ^ (pred->btb.sets - 1);
+        pbtb = &pred->btb.btb_data[index];
+      } else {
+
+      /* origin code */
       index = (baddr >> MD_BR_SHIFT) & (pred->btb.sets - 1);
       
       if (pred->btb.assoc > 1)
@@ -931,6 +976,7 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
 	}
       else
 	pbtb = &pred->btb.btb_data[index];
+  }
     }
       
   /* 
