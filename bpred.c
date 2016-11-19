@@ -570,7 +570,7 @@ bpred_dir_lookup(struct bpred_dir_t *pred_dir,	/* branch dir predictor inst */
     case BPredHash:
     {
       int hash_addr;
-      hash_addr = baddr ^ (pred_dir->config.ha.hasize - 1);
+      hash_addr = (baddr ^ (pred_dir->config.ha.hasize - 1)) & (pred_dir->config.ha.hasize - 1);
       p = &pred_dir->config.ha.hatable[hash_addr];
     }
       break;
@@ -716,7 +716,7 @@ bpred_lookup(struct bpred_t *pred,	/* branch predictor instance */
   /* not a return. Get a pointer into the BTB */
 /* New condition for hash class*/
   if (pred->class == BPredHash){
-    index = baddr ^ (pred->btb.sets - 1);
+    index = (baddr ^ (pred->btb.sets - 1)) &(pred->btb.sets - 1);
     /* look for a PC match*/
     if (pred->btb.btb_data[index].addr == baddr) {
       /* match */
@@ -911,7 +911,7 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
     {
       /* for hash case*/
       if (pred->class == BPredHash){
-        index = baddr ^ (pred->btb.sets - 1);
+        index = (baddr ^ (pred->btb.sets - 1)) & (pred->btb.sets - 1);
         pbtb = &pred->btb.btb_data[index];
       } else {
 

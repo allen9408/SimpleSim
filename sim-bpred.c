@@ -105,6 +105,10 @@ static int btb_nelt = 2;
 static int btb_config[2] =
   { /* nsets */512, /* assoc */4 };
 
+/* hash predictor config */
+static int hash_nelt = 1;
+static int hash_config[1] = {512};
+
 /* branch predictor */
 static struct bpred_t *pred;
 
@@ -146,7 +150,7 @@ sim_reg_options(struct opt_odb_t *odb)
 	       /* print */TRUE, /* format */NULL);
 
   opt_reg_string(odb, "-bpred",
-		 "branch predictor type {nottaken|taken|bimod|2lev|comb}",
+		 "branch predictor type {nottaken|taken|bimod|2lev|comb|hash}",
                  &pred_type, /* default */"bimod",
                  /* print */TRUE, /* format */NULL);
 
@@ -179,6 +183,12 @@ sim_reg_options(struct opt_odb_t *odb)
 		   btb_config, btb_nelt, &btb_nelt,
 		   /* default */btb_config,
 		   /* print */TRUE, /* format */NULL, /* !accrue */FALSE);
+
+  opt_reg_int_list(odb, "-bpred:hash",
+       "hash config (hash table size)",
+       hash_config, hash_nelt, &hash_nelt,
+       /* default */hash_config,
+       /* print */TRUE, /* format */NULL, /* !accrue */FALSE);
 }
 
 /* check simulator-specific option values */
@@ -256,6 +266,14 @@ sim_check_options(struct opt_odb_t *odb, int argc, char **argv)
 			  /* btb assoc */btb_config[1],
 			  /* ret-addr stack size */ras_size);
     }
+  else if (!mystricmp(pred_type, "hash"))
+  {
+    if (hash_nelt != 1)
+      fatal("bad hash pred config (hash table size)");
+    pred  = bpred_create(BPredHash,
+      hash_config[0],
+      0,0,0,0,0,0,0,0);
+  }
   else
     fatal("cannot parse predictor type `%s'", pred_type);
 }
