@@ -70,4 +70,8 @@
   + Add new struct in bpred_dir_t{}
   + Add new case in bored_dir_t()
   + **optional**: Add case in bpred_dir_config()/bpred_config()
+  + Add case in bpred_reg_stats()
+  + Add case in bpred_dir_lookup()
+  + **Add case in bpred_lookup()**
+  + **Add case in bpred_update()**
 
