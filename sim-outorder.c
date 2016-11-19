@@ -136,6 +136,11 @@ static int btb_nelt = 2;
 static int btb_config[2] =
   { /* nsets */512, /* assoc */4 };
 
+/* Hash predictor config */
+static int hash_nelt = 1;
+static int hash_config[1] =
+  { /* hash_table_size */512};
+
 /* instruction decode B/W (insts/cycle) */
 static int ruu_decode_width;
 
@@ -650,7 +655,7 @@ sim_reg_options(struct opt_odb_t *odb)
                );
 
   opt_reg_string(odb, "-bpred",
-		 "branch predictor type {nottaken|taken|perfect|bimod|2lev|comb}",
+		 "branch predictor type {nottaken|taken|perfect|bimod|2lev|comb|hash}",
                  &pred_type, /* default */"bimod",
                  /* print */TRUE, /* format */NULL);
 
@@ -683,6 +688,12 @@ sim_reg_options(struct opt_odb_t *odb)
 		   btb_config, btb_nelt, &btb_nelt,
 		   /* default */btb_config,
 		   /* print */TRUE, /* format */NULL, /* !accrue */FALSE);
+  /* add new hash case*/
+  opt_reg_int_list(odb, "-bpred:hash",
+    "hash config (hash table size)",
+       hash_config, hash_nelt, &hash_nelt,
+       /* default */hash_config,
+       /* print */TRUE, /* format */NULL, /* !accrue */FALSE);
 
   opt_reg_string(odb, "-bpred:spec_update",
 		 "speculative predictors update in {ID|WB} (default non-spec)",
@@ -972,6 +983,15 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
 			  /* btb assoc */btb_config[1],
 			  /* ret-addr stack size */ras_size);
     }
+  /* add new hash case */
+  else if (!mystricmp(pred_type, "hash"))
+  {
+    if (hash_nelt != 1)
+      fatal("bad hash pred config (hash table size)");
+    pred = bpred_create(BPredHash,
+      hash_config[0],
+      0,0,0,0,0,0,0,0);
+  }
   else
     fatal("cannot parse predictor type `%s'", pred_type);
 
