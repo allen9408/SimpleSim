@@ -105,6 +105,7 @@ enum bpred_class {
   BPredTaken,			/* static predict taken */
   BPredNotTaken,		/* static predict not taken */
   BPredHash,    /* hash predictor*/
+  BPredGshare,  /* Gshare predictor */
   BPred_NUM
 };
 

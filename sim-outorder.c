@@ -123,6 +123,11 @@ static int twolev_nelt = 4;
 static int twolev_config[4] =
   { /* l1size */1, /* l2size */1024, /* hist */8, /* xor */FALSE};
 
+/* gshare predictor config <fifo_size> */
+static int gshare_nelt = 1;
+static int gshare_config[1] = 
+  {/*fifo_size*/ 10};
+
 /* combining predictor config (<meta_table_size> */
 static int comb_nelt = 1;
 static int comb_config[1] =
@@ -655,7 +660,7 @@ sim_reg_options(struct opt_odb_t *odb)
                );
 
   opt_reg_string(odb, "-bpred",
-		 "branch predictor type {nottaken|taken|perfect|bimod|2lev|comb|hash}",
+		 "branch predictor type {nottaken|taken|perfect|bimod|2lev|comb|hash|gshare}",
                  &pred_type, /* default */"bimod",
                  /* print */TRUE, /* format */NULL);
 
@@ -671,6 +676,12 @@ sim_reg_options(struct opt_odb_t *odb)
                    twolev_config, twolev_nelt, &twolev_nelt,
 		   /* default */twolev_config,
                    /* print */TRUE, /* format */NULL, /* !accrue */FALSE);
+
+  opt_reg_int_list(odb, "-bpred:gshare",
+      "gshare predictor <history fifo size>",
+        gshare_config, gshare_nelt, &gshare_nelt,
+        /* default */hash_config,
+       /* print */TRUE, /* format */NULL, /* !accrue */FALSE);
 
   opt_reg_int_list(odb, "-bpred:comb",
 		   "combining predictor config (<meta_table_size>)",
@@ -959,6 +970,16 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
 			  /* btb sets */btb_config[0],
 			  /* btb assoc */btb_config[1],
 			  /* ret-addr stack size */ras_size);
+    }
+  else if (!mystricmp(pred_type, "gshare"))
+    {
+      if (gshare_nelt != 1)
+        fatal("bad gshare pred config <fifo size>");
+
+      pred = bpred_create(BPredGshare,0,0,0,0,gshare_config[0],
+        0,/* btb sets */btb_config[0],
+        /* btb assoc */btb_config[1],
+        /* ret-addr stack size */ras_size);
     }
   else if (!mystricmp(pred_type, "comb"))
     {

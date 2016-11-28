@@ -104,6 +104,14 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
 
     break;
 
+  case BPredGshare:
+    l1size = 1;
+    l2size = 1 << shift_width;
+    xor = 1;
+    pred->dirpred.twolev = 
+      bpred_dir_create(class, l1size, l2size, shift_width, xor);
+    break;
+
   case BPred2bit:
     pred->dirpred.bimod = 
       bpred_dir_create(class, bimod_size, 0, 0, 0);
@@ -126,6 +134,7 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
   switch (class) {
   case BPredComb:
   case BPred2Level:
+  case BPredGshare:
   case BPred2bit:
     {
       int i;
@@ -208,6 +217,7 @@ bpred_dir_create (
 
   cnt = -1;
   switch (class) {
+  case BPredGshare:
   case BPred2Level:
     {
       if (!l1size || (l1size & (l1size-1)) != 0)
@@ -301,6 +311,13 @@ bpred_dir_config(
       pred_dir->config.two.xor ? "" : "no", pred_dir->config.two.l2size);
     break;
 
+  case BPredGshare:
+    fprintf(stream, 
+      "pred_dir: %s: gshare: %d l1-sz, %d bits/ent, %s xor, %d l2-sz, direct-mapped\n",
+      name, pred_dir->config.two.l1size, pred_dir->config.two.shift_width,
+      pred_dir->config.two.xor ? "" : "no", pred_dir->config.two.l2size);
+    break;
+
   case BPred2bit:
     fprintf(stream, "pred_dir: %s: 2-bit: %d entries, direct-mapped\n",
       name, pred_dir->config.bimod.size);
@@ -340,6 +357,13 @@ bpred_config(struct bpred_t *pred,	/* branch predictor instance */
     bpred_dir_config (pred->dirpred.twolev, "2lev", stream);
     fprintf(stream, "btb: %d sets x %d associativity", 
 	    pred->btb.sets, pred->btb.assoc);
+    fprintf(stream, "ret_stack: %d entries", pred->retstack.size);
+    break;
+
+  case BPredGshare:
+    bpred_dir_config (pred->dirpred.twolev, "gshare", stream);
+    fprintf(stream, "btb: %d sets x %d associativity", 
+      pred->btb.sets, pred->btb.assoc);
     fprintf(stream, "ret_stack: %d entries", pred->retstack.size);
     break;
 
@@ -392,6 +416,9 @@ bpred_reg_stats(struct bpred_t *pred,	/* branch predictor instance */
       break;
     case BPred2Level:
       name = "bpred_2lev";
+      break;
+    case BPredGshare:
+      name = "bpred_gshare";
       break;
     case BPred2bit:
       name = "bpred_bimod";
@@ -529,6 +556,7 @@ bpred_dir_lookup(struct bpred_dir_t *pred_dir,	/* branch dir predictor inst */
 
   /* Except for jumps, get a pointer to direction-prediction bits */
   switch (pred_dir->class) {
+    case BPredGshare:
     case BPred2Level:
       {
 	int l1index, l2index;
@@ -643,6 +671,7 @@ bpred_lookup(struct bpred_t *pred,	/* branch predictor instance */
 	    }
 	}
       break;
+    case BPredGshare:
     case BPred2Level:
       if ((MD_OP_FLAGS(op) & (F_CTRL|F_UNCOND)) != (F_CTRL|F_UNCOND))
 	{
