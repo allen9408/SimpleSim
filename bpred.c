@@ -598,7 +598,7 @@ bpred_dir_lookup(struct bpred_dir_t *pred_dir,	/* branch dir predictor inst */
     case BPredHash:
     {
       int hash_addr;
-      hash_addr = (baddr ^ (pred_dir->config.ha.hasize - 1)) & (pred_dir->config.ha.hasize - 1);
+      hash_addr = ((baddr >> MD_BR_SHIFT) ^ (pred_dir->config.ha.hasize - 1)) & (pred_dir->config.ha.hasize - 1);
       p = &pred_dir->config.ha.hatable[hash_addr];
     }
       break;
@@ -917,7 +917,7 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
   /* update L1 table if appropriate */
   /* L1 table is updated unconditionally for combining predictor too */
   if ((MD_OP_FLAGS(op) & (F_CTRL|F_UNCOND)) != (F_CTRL|F_UNCOND) &&
-      (pred->class == BPred2Level || pred->class == BPredComb))
+      (pred->class == BPred2Level || pred->class == BPredComb || pred->class == BPredGshare))
     {
       int l1index, shift_reg;
       
