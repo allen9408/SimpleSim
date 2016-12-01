@@ -133,6 +133,11 @@ static int comb_nelt = 1;
 static int comb_config[1] =
   { /* meta_table_size */1024 };
 
+/* hodhepodge predictor config (<history fifo size>) */
+static int hodge_nelt = 1;
+static int hodge_config[1] =
+  { /*history fifo size */ 10};
+
 /* return address stack (RAS) size */
 static int ras_size = 8;
 
@@ -689,6 +694,12 @@ sim_reg_options(struct opt_odb_t *odb)
 		   /* default */comb_config,
 		   /* print */TRUE, /* format */NULL, /* !accrue */FALSE);
 
+  opt_reg_int_list(odb, "-bpred:hodge",
+       "hodgepodge predictor config (<hist_fifo_size>)",
+       hodge_config, hodge_nelt, &hodge_nelt,
+       /* default */hodge_config,
+       /* print */TRUE, /* format */NULL, /* !accrue */FALSE);
+
   opt_reg_int(odb, "-bpred:ras",
               "return address stack size (0 for no return stack)",
               &ras_size, /* default */ras_size,
@@ -1004,6 +1015,23 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
 			  /* btb assoc */btb_config[1],
 			  /* ret-addr stack size */ras_size);
     }
+  else if (!mystricmp(pred_type, "hodge"))
+    {
+      /* hodgepodge predictor, bpred_create() checks args */
+      if (hodge_nelt != 1)
+  fatal("bad hodgepodge predictor config (<hist_size>)");
+
+      pred = bpred_create(BPredHodge,
+        /* bimod table size */0,
+        /* l1 size */0,
+        /* l2 size */0,
+        /* meta table size */0,
+        /* history reg size */hodge_config[0],
+        /* history xor address */0,
+        /* btb sets */btb_config[0],
+        /* btb assoc */btb_config[1],
+        /* ret-addr stack size */ras_size);
+    }  
   /* add new hash case */
   else if (!mystricmp(pred_type, "hash"))
   {

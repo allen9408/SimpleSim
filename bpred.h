@@ -106,6 +106,7 @@ enum bpred_class {
   BPredNotTaken,		/* static predict not taken */
   BPredHash,    /* hash predictor*/
   BPredGshare,  /* Gshare predictor */
+  BPredHodge,   /* Hodgepodge predictor */
   BPred_NUM
 };
 

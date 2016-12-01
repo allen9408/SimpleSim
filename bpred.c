@@ -98,6 +98,27 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
 
     break;
 
+  case BPredHodge:
+    bimod_size = 1 << shift_width;
+    l1size = 1;
+    l2size = 1 << shift_width;
+    meta_size = 1 << shift_width;
+    xor = 1;
+    /* bimodal component */
+    pred->dirpred.bimod = 
+      bpred_dir_create(BPred2bit, bimod_size, 0, 0, 0);
+
+    /* 2-level component */
+    pred->dirpred.twolev = 
+      bpred_dir_create(BPred2Level, l1size, l2size, shift_width, xor);
+
+    /* metapredictor component */
+    pred->dirpred.meta = 
+      bpred_dir_create(BPred2bit, meta_size, 0, 0, 0);
+
+    break;
+
+
   case BPred2Level:
     pred->dirpred.twolev = 
       bpred_dir_create(class, l1size, l2size, shift_width, xor);
@@ -132,7 +153,43 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
 
   /* allocate ret-addr stack */
   switch (class) {
-  case BPredComb:
+  case BPredHodge:
+  {
+    int i=0;
+    btb_sets = 1 << shift_width;
+    btb_assoc = 1;
+      if (!(pred->btb.btb_data = calloc(btb_sets * btb_assoc,
+          sizeof(struct bpred_btb_ent_t))))
+  fatal("cannot allocate BTB");
+
+      pred->btb.sets = btb_sets;
+      pred->btb.assoc = btb_assoc;
+
+      if (pred->btb.assoc > 1)
+      for (i=0; i < (pred->btb.assoc*pred->btb.sets); i++)
+      {
+        if (i % pred->btb.assoc != pred->btb.assoc - 1)
+          pred->btb.btb_data[i].next = &pred->btb.btb_data[i+1];
+        else
+          pred->btb.btb_data[i].next = NULL;
+      
+        if (i % pred->btb.assoc != pred->btb.assoc - 1)
+          pred->btb.btb_data[i+1].prev = &pred->btb.btb_data[i];
+      }
+
+      /* allocate retstack */
+      if ((retstack_size & (retstack_size-1)) != 0)
+  fatal("Return-address-stack size must be zero or a power of two");
+      
+      pred->retstack.size = retstack_size;
+      if (retstack_size)
+        if (!(pred->retstack.stack = calloc(retstack_size, 
+              sizeof(struct bpred_btb_ent_t))))
+    fatal("cannot allocate return-address-stack");
+      pred->retstack.tos = retstack_size - 1;
+      
+      break;
+  }
   case BPred2Level:
   case BPredGshare:
   case BPred2bit:
@@ -353,6 +410,15 @@ bpred_config(struct bpred_t *pred,	/* branch predictor instance */
     fprintf(stream, "ret_stack: %d entries", pred->retstack.size);
     break;
 
+  case BPredHodge:
+    bpred_dir_config (pred->dirpred.bimod, "bimod", stream);
+    bpred_dir_config (pred->dirpred.twolev, "2lev", stream);
+    bpred_dir_config (pred->dirpred.meta, "meta", stream);
+    fprintf(stream, "btb: %d sets x %d associativity", 
+      pred->btb.sets, pred->btb.assoc);
+    fprintf(stream, "ret_stack: %d entries", pred->retstack.size);
+    break;   
+
   case BPred2Level:
     bpred_dir_config (pred->dirpred.twolev, "2lev", stream);
     fprintf(stream, "btb: %d sets x %d associativity", 
@@ -413,6 +479,9 @@ bpred_reg_stats(struct bpred_t *pred,	/* branch predictor instance */
     {
     case BPredComb:
       name = "bpred_comb";
+      break;
+    case BPredHodge:
+      name = "bpred_hodge";
       break;
     case BPred2Level:
       name = "bpred_2lev";
@@ -648,6 +717,7 @@ bpred_lookup(struct bpred_t *pred,	/* branch predictor instance */
   dir_update_ptr->pmeta = NULL;
   /* Except for jumps, get a pointer to direction-prediction bits */
   switch (pred->class) {
+    case BPredHodge:
     case BPredComb:
       if ((MD_OP_FLAGS(op) & (F_CTRL|F_UNCOND)) != (F_CTRL|F_UNCOND))
 	{
