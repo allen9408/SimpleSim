@@ -132,12 +132,17 @@ static int gshare_config[1] =
 static int comb_nelt = 1;
 static int comb_config[1] =
   { /* meta_table_size */1024 };
-
+#if HODGE_NEW_STRUCT
+/* hodhepodge predictor config (<history fifo size>) */
+static int hodge_nelt = 2;
+static int hodge_config[2] =
+  { /*history fifo size */ 10, /* assoc */ 2};
+#else
 /* hodhepodge predictor config (<history fifo size>) */
 static int hodge_nelt = 1;
 static int hodge_config[1] =
   { /*history fifo size */ 10};
-
+#endif
 /* return address stack (RAS) size */
 static int ras_size = 8;
 
@@ -685,7 +690,7 @@ sim_reg_options(struct opt_odb_t *odb)
   opt_reg_int_list(odb, "-bpred:gshare",
       "gshare predictor <history fifo size>",
         gshare_config, gshare_nelt, &gshare_nelt,
-        /* default */hash_config,
+        /* default */gshare_config,
        /* print */TRUE, /* format */NULL, /* !accrue */FALSE);
 
   opt_reg_int_list(odb, "-bpred:comb",
@@ -693,13 +698,19 @@ sim_reg_options(struct opt_odb_t *odb)
 		   comb_config, comb_nelt, &comb_nelt,
 		   /* default */comb_config,
 		   /* print */TRUE, /* format */NULL, /* !accrue */FALSE);
-
+#if HODGE_NEW_STRUCT
+  opt_reg_int_list(odb, "-bpred:hodge",
+       "hodgepodge predictor config (<hist_fifo_size><associativity>)",
+       hodge_config, hodge_nelt, &hodge_nelt,
+       /* default */hodge_config,
+       /* print */TRUE, /* format */NULL, /* !accrue */FALSE);
+#else
   opt_reg_int_list(odb, "-bpred:hodge",
        "hodgepodge predictor config (<hist_fifo_size>)",
        hodge_config, hodge_nelt, &hodge_nelt,
        /* default */hodge_config,
        /* print */TRUE, /* format */NULL, /* !accrue */FALSE);
-
+#endif
   opt_reg_int(odb, "-bpred:ras",
               "return address stack size (0 for no return stack)",
               &ras_size, /* default */ras_size,
@@ -986,7 +997,6 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
     {
       if (gshare_nelt != 1)
         fatal("bad gshare pred config <fifo size>");
-
       pred = bpred_create(BPredGshare,0,0,0,0,gshare_config[0],
         0,/* btb sets */btb_config[0],
         /* btb assoc */btb_config[1],
@@ -1017,6 +1027,21 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
     }
   else if (!mystricmp(pred_type, "hodge"))
     {
+#if HODGE_NEW_STRUCT
+      /* hodgepodge predictor, bpred_create() checks args */
+      if (hodge_nelt != 2)
+  fatal("bad hodgepodge predictor config (<hist_size><associativity>)");
+      pred = bpred_create(BPredHodge,
+        /* bimod table size */hodge_config[0],
+        /* l1 size */hodge_config[1],
+        /* l2 size */0,
+        /* meta table size */0,
+        /* history reg size */0,
+        /* history xor address */0,
+        /* btb sets */btb_config[0],
+        /* btb assoc */btb_config[1],
+        /* ret-addr stack size */ras_size);
+#else
       /* hodgepodge predictor, bpred_create() checks args */
       if (hodge_nelt != 1)
   fatal("bad hodgepodge predictor config (<hist_size>)");
@@ -1031,6 +1056,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
         /* btb sets */btb_config[0],
         /* btb assoc */btb_config[1],
         /* ret-addr stack size */ras_size);
+#endif
     }  
   /* add new hash case */
   else if (!mystricmp(pred_type, "hash"))
@@ -2714,7 +2740,6 @@ ruu_issue(void)
 
 	  /* node is now un-queued */
 	  rs->queued = FALSE;
-
 	  if (rs->in_LSQ
 	      && ((MD_OP_FLAGS(rs->op) & (F_MEM|F_STORE)) == (F_MEM|F_STORE)))
 	    {
@@ -2771,7 +2796,6 @@ ruu_issue(void)
 				{
 				  /* go to next earlier LSQ entry */
 				  i = (i + (LSQ_size-1)) % LSQ_size;
-
 				  /* FIXME: not dealing with partials! */
 				  if ((MD_OP_FLAGS(LSQ[i].op) & F_STORE)
 				      && (LSQ[i].addr == rs->addr))
@@ -2791,7 +2815,6 @@ ruu_issue(void)
 			  if (!load_lat)
 			    {
 			      int valid_addr = MD_VALID_ADDR(rs->addr);
-
 			      if (!spec_mode && !valid_addr)
 				sim_invalid_addrs++;
 
@@ -2812,6 +2835,7 @@ ruu_issue(void)
 				  load_lat = fu->oplat;
 				}
 			    }
+
 
 			  /* all loads and stores must to access D-TLB */
 			  if (dtlb && MD_VALID_ADDR(rs->addr))
@@ -2877,14 +2901,12 @@ ruu_issue(void)
 
 	}
       /* else, RUU entry was squashed */
-
       /* reclaim ready list entry, NOTE: this is done whether or not the
          instruction issued, since the instruction was once again reinserted
          into the ready queue if it did not issue, this ensures that the ready
          queue is always properly sorted */
       RSLINK_FREE(node);
     }
-
   /* put any instruction not issued back into the ready queue, go through
      normal channels to ensure instruction stay ordered correctly */
   for (; node; node = next_node)
@@ -4351,7 +4373,7 @@ ruu_fetch(void)
 	     result for branches (assumes pre-decode bits); NOTE: returned
 	     value may be 1 if bpred can only predict a direction */
 	  if (MD_OP_FLAGS(op) & F_CTRL)
-	    fetch_pred_PC =
+{	    fetch_pred_PC =
 	      bpred_lookup(pred,
 			   /* branch address */fetch_regs_PC,
 			   /* target address *//* FIXME: not computed */0,
@@ -4360,9 +4382,8 @@ ruu_fetch(void)
 			   /* return? */MD_IS_RETURN(op),
 			   /* updt */&(fetch_data[fetch_tail].dir_update),
 			   /* RSB index */&stack_recover_idx);
-	  else
+}	  else
 	    fetch_pred_PC = 0;
-
 	  /* valid address returned from branch predictor? */
 	  if (!fetch_pred_PC)
 	    {
@@ -4615,7 +4636,6 @@ sim_main(void)
 
       /* commit entries from RUU/LSQ to architected register file */
       ruu_commit();
-
       /* service function unit release events */
       ruu_release_fu();
 
@@ -4630,7 +4650,6 @@ sim_main(void)
 	  /* try to locate memory operations that are ready to execute */
 	  /* ==> inserts operations into ready queue --> mem deps resolved */
 	  lsq_refresh();
-
 	  /* issue operations ready to execute from a previous cycle */
 	  /* <== drains ready queue <-- ready operations commence execution */
 	  ruu_issue();
@@ -4667,9 +4686,9 @@ sim_main(void)
 
       /* go to next cycle */
       sim_cycle++;
-
       /* finish early? */
       if (max_insts && sim_num_insn >= max_insts)
-	return;
+  return;
+
     }
 }

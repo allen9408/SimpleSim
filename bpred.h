@@ -53,6 +53,7 @@
 #define BPRED_H
 
 #define dassert(a) assert(a)
+#define HODGE_NEW_STRUCT 1
 
 #include <stdio.h>
 
@@ -118,6 +119,15 @@ struct bpred_btb_ent_t {
   struct bpred_btb_ent_t *prev, *next; /* lru chaining pointers */
 };
 
+#if HODGE_NEW_STRUCT
+struct bpred_hodge_ent_t {
+  md_addr_t addr;
+  enum md_opcode op;
+  unsigned char *res;
+  int data;
+  struct bpred_hodge_ent_t *prev, *next;
+};
+#endif
 /* direction predictor def */
 struct bpred_dir_t {
   enum bpred_class class;	/* type of predictor */
@@ -138,6 +148,24 @@ struct bpred_dir_t {
       int hasize; /* Hash table size */
       unsigned char *hatable; /* prediction state table */
     } ha;
+#if HODGE_NEW_STRUCT
+    struct{
+      int hsets;
+      int hassoc;
+      int hfifo;
+      int fifo_reg;
+      unsigned char *hop1_data;
+      md_addr_t *hop1_addr;
+      unsigned char *hop2_data;
+      md_addr_t *hop2_addr;
+      unsigned char *hopc_data;
+      md_addr_t *hopc_addr;
+
+      // struct bpred_hodge_ent_t *hop1;
+      // struct bpred_hodge_ent_t *hop2;
+      // struct bpred_hodge_ent_t *hopc;
+    }hopo;
+#endif
   } config;
 };
 
@@ -150,6 +178,9 @@ struct bpred_t {
     struct bpred_dir_t *meta;	  /* meta predictor */
     /* Add new element in sturct bpred_t */
     struct bpred_dir_t *hash;   /* hash predictor */
+#if HODGE_NEW_STRUCT
+    struct bpred_dir_t *hodge;
+#endif
   } dirpred;
 
   struct {
@@ -192,6 +223,11 @@ struct bpred_update_t {
     unsigned int bimod  : 1;    /* bimodal predictor */
     unsigned int twolev : 1;    /* 2-level predictor */
     unsigned int meta   : 1;    /* meta predictor (0..bimod / 1..2lev) */
+#if HODGE_NEW_STRUCT
+    unsigned int hodge1 : 1;
+    unsigned int hodge2 : 1;
+    unsigned int hodgem : 1;
+#endif  
   } dir;
 };
 

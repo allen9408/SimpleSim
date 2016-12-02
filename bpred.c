@@ -99,6 +99,12 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
     break;
 
   case BPredHodge:
+#if HODGE_NEW_STRUCT
+  /* bimod_size = history fifo size*/
+  /* l1size = number of associativity */
+    pred->dirpred.hodge =
+      bpred_dir_create(class, bimod_size, l1size, 0, 1);
+#else
     bimod_size = 1 << shift_width;
     l1size = 1;
     l2size = 1 << shift_width;
@@ -115,7 +121,7 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
     /* metapredictor component */
     pred->dirpred.meta = 
       bpred_dir_create(BPred2bit, meta_size, 0, 0, 0);
-
+#endif
     break;
 
 
@@ -156,8 +162,17 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
   case BPredHodge:
   {
     int i=0;
+#if HODGE_NEW_STRUCT
+  /* bimod_size = history fifo size*/
+  /* l1size = number of associativity */
+    btb_sets = 1 << bimod_size;
+    btb_assoc = l1size;
+    printf("BTBSETS:%d,BTBASS:%d\n",btb_sets,btb_assoc);
+#else
+
     btb_sets = 1 << shift_width;
     btb_assoc = 1;
+#endif
       if (!(pred->btb.btb_data = calloc(btb_sets * btb_assoc,
           sizeof(struct bpred_btb_ent_t))))
   fatal("cannot allocate BTB");
@@ -274,6 +289,63 @@ bpred_dir_create (
 
   cnt = -1;
   switch (class) {
+#if HODGE_NEW_STRUCT
+  case BPredHodge:
+    {
+      int table_size;
+      /* check history fifo size */
+      if (!l1size || l1size >30)
+        fatal("shift_width, %d, must be non-zero and less than 31",
+          l1size);
+      pred_dir->config.hopo.hsets = 1 << l1size;
+      pred_dir->config.hopo.hfifo = l1size;
+      /* check associative num */
+      if (!l2size || (l2size & (l2size - 1)) != 0)
+        fatal("associative num, %d, must be non-zero and a power of two",
+          l2size);
+      pred_dir->config.hopo.hassoc = l2size;
+
+      table_size = (1 << l1size) * l2size;
+      /* allocate three tables */
+      /* first bimod table */
+      if (!(pred_dir->config.hopo.hop1_data = calloc(table_size,
+        sizeof(unsigned char))))
+        fatal("cannot allocate first table");
+      if (!(pred_dir->config.hopo.hop1_addr = calloc(table_size,
+        sizeof(unsigned long long))))
+        fatal("cannot allocate first addr table");
+
+      /* second bimod table */
+      if (!(pred_dir->config.hopo.hop2_data = calloc(table_size,
+        sizeof(unsigned char))))
+        fatal("cannot allocate second table");
+      if (!(pred_dir->config.hopo.hop2_addr = calloc(table_size,
+        sizeof(unsigned long long))))
+        fatal("cannot allocate second addr table");
+      /* choice table */
+      if (!(pred_dir->config.hopo.hopc_data = calloc(table_size,
+        sizeof(unsigned char))))
+        fatal("cannot allocate choice table");
+      if (!(pred_dir->config.hopo.hopc_addr = calloc(table_size,
+        sizeof(unsigned long long))))
+        fatal("cannot allocate choice addr table");
+
+      flipflop = 2;
+      /* initialize counters to weakly taken */
+      for (cnt = 0; cnt < table_size; cnt ++) {
+        pred_dir->config.hopo.hop1_data[cnt] = flipflop;
+        pred_dir->config.hopo.hop2_data[cnt] = flipflop;
+      /* initialize choosing the first predictor */
+        pred_dir->config.hopo.hopc_data[cnt] = 3 - flipflop;
+      /* initialize addr */
+        pred_dir->config.hopo.hop1_addr[cnt] = 0;
+        pred_dir->config.hopo.hop2_addr[cnt] = 0;
+        pred_dir->config.hopo.hopc_addr[cnt] = 0;
+      }
+
+      break;
+    }
+#endif
   case BPredGshare:
   case BPred2Level:
     {
@@ -361,6 +433,15 @@ bpred_dir_config(
   FILE *stream)			/* output stream */
 {
   switch (pred_dir->class) {
+#if HODGE_NEW_STRUCT
+  case BPredHodge:
+    fprintf(stream,
+      "pred_dir: %s: hodge: %d sets, %d assoc, %d bits/ent\n",
+      name, pred_dir->config.hopo.hsets, pred_dir->config.hopo.hassoc,
+      pred_dir->config.hopo.hfifo);
+    break;
+
+#endif
   case BPred2Level:
     fprintf(stream,
       "pred_dir: %s: 2-lvl: %d l1-sz, %d bits/ent, %s xor, %d l2-sz, direct-mapped\n",
@@ -411,9 +492,13 @@ bpred_config(struct bpred_t *pred,	/* branch predictor instance */
     break;
 
   case BPredHodge:
+#if HODGE_NEW_STRUCT
+    bpred_dir_config(pred->dirpred.hodge, "hodge", stream);
+#else
     bpred_dir_config (pred->dirpred.bimod, "bimod", stream);
     bpred_dir_config (pred->dirpred.twolev, "2lev", stream);
     bpred_dir_config (pred->dirpred.meta, "meta", stream);
+#endif
     fprintf(stream, "btb: %d sets x %d associativity", 
       pred->btb.sets, pred->btb.assoc);
     fprintf(stream, "ret_stack: %d entries", pred->retstack.size);
@@ -617,6 +702,141 @@ bpred_after_priming(struct bpred_t *bpred)
     /* was: ((baddr >> 16) ^ baddr) & (pred->dirpred.bimod.size-1) */
 
 /* predicts a branch direction */
+#if HODGE_NEW_STRUCT
+char *            /* pointer to counter */
+bpred_dir_lookup(struct bpred_dir_t *pred_dir,  /* branch dir predictor inst */
+     md_addr_t baddr, /* branch address */
+     int point)   
+{
+  unsigned char *p = NULL;
+
+  /* Except for jumps, get a pointer to direction-prediction bits */
+  switch (pred_dir->class) {
+    case BPredHodge:
+      {
+        int i;
+        if (point == 1) {
+          /* look for first predictor */
+          int set_num1,base_ad1;
+          set_num1 = (baddr >> MD_BR_SHIFT) & (pred_dir->config.hopo.hsets - 1);
+          /* find p1*/
+          base_ad1 = set_num1 * pred_dir->config.hopo.hassoc;
+          for (i = base_ad1; i < base_ad1 + pred_dir->config.hopo.hassoc; i++) {
+            if (pred_dir->config.hopo.hop1_addr[i] == baddr) {
+              /* p1 match */
+              p = &pred_dir->config.hopo.hop1_data[i];
+            } 
+          }
+          if (!p) {
+            /* if not found, find a place in set(LRU) */
+            for(i = base_ad1; i < base_ad1 + pred_dir->config.hopo.hassoc - 1; i++){
+              pred_dir->config.hopo.hop1_data[i] = pred_dir->config.hopo.hop1_data[i+1];
+              pred_dir->config.hopo.hop1_addr[i] = pred_dir->config.hopo.hop1_addr[i+1];
+            }
+            pred_dir->config.hopo.hop1_addr[i] = baddr;
+            p = &pred_dir->config.hopo.hop1_data[i];
+          } 
+        } else if (point == 2) {
+          /* look for the second predictor */
+          int base_ad2;
+          int set_num2 = pred_dir->config.hopo.fifo_reg;
+          set_num2 = (set_num2 ^ (baddr >> MD_BR_SHIFT))
+            & ((1 << pred_dir->config.hopo.hfifo) - 1);
+          base_ad2 = set_num2 * pred_dir->config.hopo.hassoc;
+          for (i = base_ad2; i < base_ad2 + pred_dir->config.hopo.hassoc; i++) {
+            if (pred_dir->config.hopo.hop2_addr[i] == baddr) {
+              /* p1 match */
+              p = &pred_dir->config.hopo.hop2_data[i];
+            } 
+          }
+          if (!p) {
+            /* if not found, find a place in set(LRU) */
+            for(i = base_ad2; i < base_ad2 + pred_dir->config.hopo.hassoc - 1; i++) {
+              pred_dir->config.hopo.hop2_data[i] = pred_dir->config.hopo.hop2_data[i+1];
+              pred_dir->config.hopo.hop2_addr[i] = pred_dir->config.hopo.hop2_addr[i+1];
+            }
+            pred_dir->config.hopo.hop2_addr[i] = baddr;
+            p = &pred_dir->config.hopo.hop2_data[i];
+          } 
+        } else if (point == 3) {
+          /* look for choice */
+          int set_num3;
+          int base_ad3;
+          set_num3 = (baddr >> MD_BR_SHIFT) & (pred_dir->config.hopo.hsets - 1);
+          base_ad3 = set_num3 * pred_dir->config.hopo.hassoc;
+          for (i = base_ad3; i < base_ad3 + pred_dir->config.hopo.hassoc; i++) {
+            if (pred_dir->config.hopo.hopc_addr[i] == baddr) {
+              /* p3 match */
+              p = &pred_dir->config.hopo.hopc_data[i];
+            } 
+          }
+          if (!p) {
+            /* if not found, find a place in set(LRU) */
+            for(i = base_ad3; i < base_ad3 + pred_dir->config.hopo.hassoc - 1; i++) {
+              pred_dir->config.hopo.hopc_data[i] = pred_dir->config.hopo.hopc_data[i+1];
+              pred_dir->config.hopo.hopc_addr[i] = pred_dir->config.hopo.hopc_addr[i+1];
+            }
+            pred_dir->config.hopo.hopc_addr[i] = baddr;
+            p = &pred_dir->config.hopo.hopc_data[i];
+          } 
+        } else{
+          fatal("Wrong pointer for hodge predictor\n");
+        }
+        break;
+      }
+    case BPredGshare:
+    case BPred2Level:
+      {
+  int l1index, l2index;
+
+        /* traverse 2-level tables */
+        l1index = (baddr >> MD_BR_SHIFT) & (pred_dir->config.two.l1size - 1);
+        l2index = pred_dir->config.two.shiftregs[l1index];
+        if (pred_dir->config.two.xor)
+    {
+      /* this L2 index computation is more "compatible" to McFarling's
+         verison of it, i.e., if the PC xor address component is only
+         part of the index, take the lower order address bits for the
+         other part of the index, rather than the higher order ones */
+      l2index = (((l2index ^ (baddr >> MD_BR_SHIFT))
+      & ((1 << pred_dir->config.two.shift_width) - 1))
+           | ((baddr >> MD_BR_SHIFT)
+        << pred_dir->config.two.shift_width));
+    }
+  else
+    {
+      l2index =
+        l2index
+    | ((baddr >> MD_BR_SHIFT) << pred_dir->config.two.shift_width);
+    }
+        l2index = l2index & (pred_dir->config.two.l2size - 1);
+
+        /* get a pointer to prediction state information */
+        p = &pred_dir->config.two.l2table[l2index];
+      }
+      break;
+    case BPred2bit:
+      p = &pred_dir->config.bimod.table[BIMOD_HASH(pred_dir, baddr)];
+      break;
+    /* Add new case */
+    case BPredHash:
+    {
+      int hash_addr;
+      hash_addr = ((baddr >> MD_BR_SHIFT) ^ (pred_dir->config.ha.hasize - 1)) & (pred_dir->config.ha.hasize - 1);
+      p = &pred_dir->config.ha.hatable[hash_addr];
+    }
+      break;
+    case BPredTaken:
+    case BPredNotTaken:
+      break;
+    default:
+      panic("bogus branch direction predictor class");
+    }
+
+  return (char *)p;
+}
+
+#else
 char *						/* pointer to counter */
 bpred_dir_lookup(struct bpred_dir_t *pred_dir,	/* branch dir predictor inst */
 		 md_addr_t baddr)		/* branch address */
@@ -625,6 +845,7 @@ bpred_dir_lookup(struct bpred_dir_t *pred_dir,	/* branch dir predictor inst */
 
   /* Except for jumps, get a pointer to direction-prediction bits */
   switch (pred_dir->class) {
+
     case BPredGshare:
     case BPred2Level:
       {
@@ -635,7 +856,6 @@ bpred_dir_lookup(struct bpred_dir_t *pred_dir,	/* branch dir predictor inst */
         l2index = pred_dir->config.two.shiftregs[l1index];
         if (pred_dir->config.two.xor)
 	  {
-#if 1
 	    /* this L2 index computation is more "compatible" to McFarling's
 	       verison of it, i.e., if the PC xor address component is only
 	       part of the index, take the lower order address bits for the
@@ -644,9 +864,6 @@ bpred_dir_lookup(struct bpred_dir_t *pred_dir,	/* branch dir predictor inst */
 			& ((1 << pred_dir->config.two.shift_width) - 1))
 		       | ((baddr >> MD_BR_SHIFT)
 			  << pred_dir->config.two.shift_width));
-#else
-	    l2index = l2index ^ (baddr >> MD_BR_SHIFT);
-#endif
 	  }
 	else
 	  {
@@ -680,6 +897,8 @@ bpred_dir_lookup(struct bpred_dir_t *pred_dir,	/* branch dir predictor inst */
 
   return (char *)p;
 }
+#endif
+
 
 /* probe a predictor for a next fetch address, the predictor is probed
    with branch address BADDR, the branch target is BTARGET (used for
@@ -718,14 +937,47 @@ bpred_lookup(struct bpred_t *pred,	/* branch predictor instance */
   /* Except for jumps, get a pointer to direction-prediction bits */
   switch (pred->class) {
     case BPredHodge:
+#if HODGE_NEW_STRUCT
+  {
+    if ((MD_OP_FLAGS(op) & (F_CTRL|F_UNCOND)) != (F_CTRL|F_UNCOND))
+    {
+      char *bimod, *twolev, *meta;
+      bimod = bpred_dir_lookup (pred->dirpred.hodge, baddr,1);
+      twolev = bpred_dir_lookup (pred->dirpred.hodge, baddr,2);
+      meta = bpred_dir_lookup (pred->dirpred.hodge, baddr,3);
+      dir_update_ptr->pmeta = meta;
+      dir_update_ptr->dir.meta  = (*meta >= 2);
+      dir_update_ptr->dir.bimod = (*bimod >= 2);
+      dir_update_ptr->dir.twolev  = (*twolev >= 2);
+      if (*meta >= 2)
+        {
+          dir_update_ptr->pdir1 = twolev;
+          dir_update_ptr->pdir2 = bimod;
+        }
+      else
+        {
+          dir_update_ptr->pdir1 = bimod;
+          dir_update_ptr->pdir2 = twolev;
+        }
+    }
+    break;
+    
+  }
+#endif
     case BPredComb:
       if ((MD_OP_FLAGS(op) & (F_CTRL|F_UNCOND)) != (F_CTRL|F_UNCOND))
 	{
 	  char *bimod, *twolev, *meta;
+#if HODGE_NEW_STRUCT
+    bimod = bpred_dir_lookup (pred->dirpred.bimod, baddr,1);
+    twolev = bpred_dir_lookup (pred->dirpred.twolev, baddr,1);
+    meta = bpred_dir_lookup (pred->dirpred.meta, baddr,1);    
+#else 
 	  bimod = bpred_dir_lookup (pred->dirpred.bimod, baddr);
 	  twolev = bpred_dir_lookup (pred->dirpred.twolev, baddr);
 	  meta = bpred_dir_lookup (pred->dirpred.meta, baddr);
-	  dir_update_ptr->pmeta = meta;
+#endif
+    dir_update_ptr->pmeta = meta;
 	  dir_update_ptr->dir.meta  = (*meta >= 2);
 	  dir_update_ptr->dir.bimod = (*bimod >= 2);
 	  dir_update_ptr->dir.twolev  = (*twolev >= 2);
@@ -745,21 +997,36 @@ bpred_lookup(struct bpred_t *pred,	/* branch predictor instance */
     case BPred2Level:
       if ((MD_OP_FLAGS(op) & (F_CTRL|F_UNCOND)) != (F_CTRL|F_UNCOND))
 	{
+#if HODGE_NEW_STRUCT
+    dir_update_ptr->pdir1 =
+      bpred_dir_lookup (pred->dirpred.twolev, baddr,1);
+#else
 	  dir_update_ptr->pdir1 =
 	    bpred_dir_lookup (pred->dirpred.twolev, baddr);
-	}
+#endif
+    }
       break;
     case BPred2bit:
       if ((MD_OP_FLAGS(op) & (F_CTRL|F_UNCOND)) != (F_CTRL|F_UNCOND))
 	{
+#if HODGE_NEW_STRUCT
+    dir_update_ptr->pdir1 =
+      bpred_dir_lookup (pred->dirpred.bimod, baddr,1);
+#else
 	  dir_update_ptr->pdir1 =
 	    bpred_dir_lookup (pred->dirpred.bimod, baddr);
+#endif
 	}
       break;
     /* Add new case*/
     case BPredHash:
       if ((MD_OP_FLAGS(op) & (F_CTRL|F_UNCOND)) != (F_CTRL|F_UNCOND)) {
+#if HODGE_NEW_STRUCT
+    dir_update_ptr->pdir1 =
+      bpred_dir_lookup (pred->dirpred.hash, baddr,1);
+#else
         dir_update_ptr->pdir1 = bpred_dir_lookup(pred->dirpred.hash, baddr);
+#endif
       }
       break;
     case BPredTaken:
@@ -849,6 +1116,7 @@ bpred_lookup(struct bpred_t *pred,	/* branch predictor instance */
     }
   }
 
+
   /*
    * We now also have a pointer into the BTB for a hit, or NULL otherwise
    */
@@ -913,7 +1181,6 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
   struct bpred_btb_ent_t *pbtb = NULL;
   struct bpred_btb_ent_t *lruhead = NULL, *lruitem = NULL;
   int index, i;
-
   /* don't change bpred state for non-branch instructions or if this
    * is a stateless predictor*/
   if (!(MD_OP_FLAGS(op) & F_CTRL))
@@ -972,7 +1239,6 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
    * Now we know the branch didn't use the ret-addr stack, and that this
    * is a stateful predictor 
    */
-
 #ifdef RAS_BUG_COMPATIBLE
   /* if function call, push return-address onto return-address stack */
   if (MD_IS_CALL(op) && pred->retstack.size)
@@ -983,14 +1249,27 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
       pred->retstack_pushes++;
     }
 #endif /* RAS_BUG_COMPATIBLE */
-
   /* update L1 table if appropriate */
   /* L1 table is updated unconditionally for combining predictor too */
   if ((MD_OP_FLAGS(op) & (F_CTRL|F_UNCOND)) != (F_CTRL|F_UNCOND) &&
-      (pred->class == BPred2Level || pred->class == BPredComb || pred->class == BPredGshare))
+      (pred->class == BPred2Level || pred->class == BPredComb || pred->class == BPredGshare || pred->class == BPredHodge))
     {
       int l1index, shift_reg;
-      
+#if HODGE_NEW_STRUCT
+      if (pred->class == BPredHodge) {
+        shift_reg = 
+          (pred->dirpred.hodge->config.hopo.fifo_reg << 1) | (!!taken);
+        pred->dirpred.hodge->config.hopo.fifo_reg = 
+          shift_reg & ((1 << pred->dirpred.hodge->config.hopo.hfifo) -1);
+      } else {
+      l1index =
+  (baddr >> MD_BR_SHIFT) & (pred->dirpred.twolev->config.two.l1size - 1);
+      shift_reg =
+  (pred->dirpred.twolev->config.two.shiftregs[l1index] << 1) | (!!taken);
+      pred->dirpred.twolev->config.two.shiftregs[l1index] =
+  shift_reg & ((1 << pred->dirpred.twolev->config.two.shift_width) - 1);  
+      }
+#else
       /* also update appropriate L1 history register */
       l1index =
 	(baddr >> MD_BR_SHIFT) & (pred->dirpred.twolev->config.two.l1size - 1);
@@ -998,13 +1277,13 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
 	(pred->dirpred.twolev->config.two.shiftregs[l1index] << 1) | (!!taken);
       pred->dirpred.twolev->config.two.shiftregs[l1index] =
 	shift_reg & ((1 << pred->dirpred.twolev->config.two.shift_width) - 1);
+#endif
     }
   /* Add new case */
   /*if ((MD_OP_FLAGS(op) & (F_CTRL|F_UNCOND)) != (F_CTRL|F_UNCOND) &&
       (pred->class == BPredHash)) {
     l1index = baddr ^ (pred->btb.sets - 1);
   }*/
-
   /* find BTB entry if it's a taken branch (don't allocate for non-taken) */
   if (taken)
     {
@@ -1135,7 +1414,6 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
 	    }
 	}
     }
-
   /* update BTB (but only for taken branches) */
   if (pbtb)
     {
