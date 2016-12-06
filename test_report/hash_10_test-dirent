@@ -1,0 +1,2 @@
+PREDICTORTYPE:hash
+fatal: could not parse argument `test-dirent' of option `-bpred:hash'

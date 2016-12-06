@@ -1,0 +1,2 @@
+PREDICTORTYPE:hash
+fatal: could not parse argument `test-math' of option `-bpred:hash'

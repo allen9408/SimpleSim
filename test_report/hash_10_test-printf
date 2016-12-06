@@ -1,0 +1,2 @@
+PREDICTORTYPE:hash
+fatal: could not parse argument `test-printf' of option `-bpred:hash'
