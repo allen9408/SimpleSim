@@ -2,7 +2,11 @@
 <center>Weiqing Ni</center>  
 <center> Rutgers Comp Arch Project</center>  
 
+### What We Have Done
 
+1. hash predictor(strategy 6)  
+2. G-share predictor   
+3. Hodgepodge predictor (own choice)
 
 ### Installation 
 
@@ -35,6 +39,11 @@
 ### Test *(for three strategies only)*  
 ./r.sh {type} {configs} {benchmark}  
 > example: ./r.sh gshare 10 test-math  
->  
+>
 > type: 		hash/gshare/hodge  
-> benchmark:	benchmarks in {IDR}/tests/bin/
+> benchmark:	benchmarks in {DIR}/tests/bin/
+
+### Hodgepodge Predictor Structure
+
+![hodge_predicture](https://cl.ly/0s1q0m2x2b0a/own%20predictor.png)
+
