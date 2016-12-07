@@ -1,5 +1,6 @@
 #!/bin/bash
-hash_config="2^$1"|bc
+hash_config=$[2**$1]
+echo $hash_config
 gsahre_config=$1
 hodge_config1=$1
 hodge_config2=$2

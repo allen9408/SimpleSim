@@ -9,7 +9,7 @@ of SimpleScalar, LLC (info@simplescalar.com).
 warning: section `.comment' ignored...
 sim: command line: ./sim-outorder -bpred hodge -bpred:hodge 10 2 ./tests/bin/test-printf 
 
-sim: simulation started @ Tue Dec  6 14:29:20 2016, options follow:
+sim: simulation started @ Wed Dec  7 01:27:37 2016, options follow:
 
 sim-outorder: This simulator implements a very detailed out-of-order issue
 superscalar processor with a two-level memory system and speculative
@@ -366,13 +366,13 @@ testing parametric fields: 0.7000
 warning: partially supported sigprocmask() call...
 
 sim: ** simulation statistics **
-sim_num_insn                 919809 # total number of instructions committed
-sim_num_refs                 271281 # total number of loads and stores committed
-sim_num_loads                169269 # total number of loads committed
+sim_num_insn                 919818 # total number of instructions committed
+sim_num_refs                 271284 # total number of loads and stores committed
+sim_num_loads                169272 # total number of loads committed
 sim_num_stores          102012.0000 # total number of stores committed
-sim_num_branches             144045 # total number of branches committed
+sim_num_branches             144048 # total number of branches committed
 sim_elapsed_time                  1 # total simulation time in seconds
-sim_inst_rate           919809.0000 # simulation speed (in insts/sec)
+sim_inst_rate           919818.0000 # simulation speed (in insts/sec)
 sim_total_insn               997073 # total number of instructions executed
 sim_total_refs               288578 # total number of loads and stores executed
 sim_total_loads              182717 # total number of loads executed
@@ -382,31 +382,31 @@ sim_cycle                    559085 # total simulation time in cycles
 sim_IPC                      1.6452 # instructions per cycle
 sim_CPI                      0.6078 # cycles per instruction
 sim_exec_BW                  1.7834 # total instructions (mis-spec + committed) per cycle
-sim_IPB                      6.3856 # instruction per branch
+sim_IPB                      6.3855 # instruction per branch
 IFQ_count                   1331301 # cumulative IFQ occupancy
 IFQ_fcount                   287134 # cumulative IFQ full count
 ifq_occupancy                2.3812 # avg IFQ occupancy (insn's)
 ifq_rate                     1.7834 # avg IFQ dispatch rate (insn/cycle)
 ifq_latency                  1.3352 # avg IFQ occupant latency (cycle's)
 ifq_full                     0.5136 # fraction of time (cycle's) IFQ was full
-RUU_count                   5202686 # cumulative RUU occupancy
+RUU_count                   5202703 # cumulative RUU occupancy
 RUU_fcount                   158594 # cumulative RUU full count
 ruu_occupancy                9.3057 # avg RUU occupancy (insn's)
 ruu_rate                     1.7834 # avg RUU dispatch rate (insn/cycle)
 ruu_latency                  5.2180 # avg RUU occupant latency (cycle's)
 ruu_full                     0.2837 # fraction of time (cycle's) RUU was full
-LSQ_count                   1508747 # cumulative LSQ occupancy
+LSQ_count                   1508752 # cumulative LSQ occupancy
 LSQ_fcount                    33061 # cumulative LSQ full count
 lsq_occupancy                2.6986 # avg LSQ occupancy (insn's)
 lsq_rate                     1.7834 # avg LSQ dispatch rate (insn/cycle)
 lsq_latency                  1.5132 # avg LSQ occupant latency (cycle's)
 lsq_full                     0.0591 # fraction of time (cycle's) LSQ was full
-sim_slip                    7591596 # total number of slip cycles
-avg_sim_slip                 8.2534 # the average slip between issue and retirement
+sim_slip                    7592026 # total number of slip cycles
+avg_sim_slip                 8.2538 # the average slip between issue and retirement
 bpred_hodge.lookups          161269 # total number of bpred lookups
-bpred_hodge.updates          144045 # total number of updates
-bpred_hodge.addr_hits        135145 # total number of address-predicted hits
-bpred_hodge.dir_hits         138424 # total number of direction-predicted hits (includes addr-hits)
+bpred_hodge.updates          144048 # total number of updates
+bpred_hodge.addr_hits        135148 # total number of address-predicted hits
+bpred_hodge.dir_hits         138427 # total number of direction-predicted hits (includes addr-hits)
 bpred_hodge.misses             5621 # total number of misses
 bpred_hodge.jr_hits           16137 # total number of address-predicted hits for JR's
 bpred_hodge.jr_seen           18843 # total number of JR's seen
@@ -481,10 +481,10 @@ ld_stack_size                 16384 # program initial stack size
 ld_prog_entry          0x01200057f0 # program entry point (initial PC)
 ld_environ_base        0x011ff97000 # program environment base address address
 ld_target_big_endian              0 # target executable endian-ness, non-zero if big endian
-mem.page_count                   18 # total number of pages allocated
-mem.page_mem                   144k # total size of memory pages allocated
-mem.ptab_misses                4205 # total first level page table misses
-mem.ptab_accesses           5986884 # total page table accesses
+mem.page_count                   19 # total number of pages allocated
+mem.page_mem                   152k # total size of memory pages allocated
+mem.ptab_misses                4206 # total first level page table misses
+mem.ptab_accesses           5989266 # total page table accesses
 mem.ptab_miss_rate           0.0007 # first level page table miss rate
 
 BTBSETS:1024,BTBASS:2

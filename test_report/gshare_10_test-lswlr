@@ -9,7 +9,7 @@ of SimpleScalar, LLC (info@simplescalar.com).
 warning: section `.comment' ignored...
 sim: command line: ./sim-outorder -bpred gshare -bpred:gshare 10 ./tests/bin/test-lswlr 
 
-sim: simulation started @ Tue Dec  6 14:29:19 2016, options follow:
+sim: simulation started @ Wed Dec  7 01:27:36 2016, options follow:
 
 sim-outorder: This simulator implements a very detailed out-of-order issue
 superscalar processor with a two-level memory system and speculative
@@ -138,54 +138,54 @@ str = Hello world...
 warning: partially supported sigprocmask() call...
 
 sim: ** simulation statistics **
-sim_num_insn                   4938 # total number of instructions committed
-sim_num_refs                   1902 # total number of loads and stores committed
-sim_num_loads                   928 # total number of loads committed
+sim_num_insn                   4947 # total number of instructions committed
+sim_num_refs                   1905 # total number of loads and stores committed
+sim_num_loads                   931 # total number of loads committed
 sim_num_stores             974.0000 # total number of stores committed
-sim_num_branches                883 # total number of branches committed
+sim_num_branches                886 # total number of branches committed
 sim_elapsed_time                  1 # total simulation time in seconds
-sim_inst_rate             4938.0000 # simulation speed (in insts/sec)
+sim_inst_rate             4947.0000 # simulation speed (in insts/sec)
 sim_total_insn                 5954 # total number of instructions executed
 sim_total_refs                 2119 # total number of loads and stores executed
 sim_total_loads                1078 # total number of loads executed
 sim_total_stores          1041.0000 # total number of stores executed
 sim_total_branches             1047 # total number of branches executed
 sim_cycle                     13685 # total simulation time in cycles
-sim_IPC                      0.3608 # instructions per cycle
-sim_CPI                      2.7714 # cycles per instruction
+sim_IPC                      0.3615 # instructions per cycle
+sim_CPI                      2.7663 # cycles per instruction
 sim_exec_BW                  0.4351 # total instructions (mis-spec + committed) per cycle
-sim_IPB                      5.5923 # instruction per branch
+sim_IPB                      5.5835 # instruction per branch
 IFQ_count                     10676 # cumulative IFQ occupancy
 IFQ_fcount                     2237 # cumulative IFQ full count
 ifq_occupancy                0.7801 # avg IFQ occupancy (insn's)
 ifq_rate                     0.4351 # avg IFQ dispatch rate (insn/cycle)
 ifq_latency                  1.7931 # avg IFQ occupant latency (cycle's)
 ifq_full                     0.1635 # fraction of time (cycle's) IFQ was full
-RUU_count                     43520 # cumulative RUU occupancy
+RUU_count                     43537 # cumulative RUU occupancy
 RUU_fcount                      921 # cumulative RUU full count
-ruu_occupancy                3.1801 # avg RUU occupancy (insn's)
+ruu_occupancy                3.1814 # avg RUU occupancy (insn's)
 ruu_rate                     0.4351 # avg RUU dispatch rate (insn/cycle)
-ruu_latency                  7.3094 # avg RUU occupant latency (cycle's)
+ruu_latency                  7.3122 # avg RUU occupant latency (cycle's)
 ruu_full                     0.0673 # fraction of time (cycle's) RUU was full
-LSQ_count                     15976 # cumulative LSQ occupancy
+LSQ_count                     15981 # cumulative LSQ occupancy
 LSQ_fcount                      379 # cumulative LSQ full count
-lsq_occupancy                1.1674 # avg LSQ occupancy (insn's)
+lsq_occupancy                1.1678 # avg LSQ occupancy (insn's)
 lsq_rate                     0.4351 # avg LSQ dispatch rate (insn/cycle)
-lsq_latency                  2.6832 # avg LSQ occupant latency (cycle's)
+lsq_latency                  2.6841 # avg LSQ occupant latency (cycle's)
 lsq_full                     0.0277 # fraction of time (cycle's) LSQ was full
-sim_slip                      58533 # total number of slip cycles
-avg_sim_slip                11.8536 # the average slip between issue and retirement
+sim_slip                      58963 # total number of slip cycles
+avg_sim_slip                11.9189 # the average slip between issue and retirement
 bpred_gshare.lookups           1092 # total number of bpred lookups
-bpred_gshare.updates            883 # total number of updates
-bpred_gshare.addr_hits          423 # total number of address-predicted hits
-bpred_gshare.dir_hits           660 # total number of direction-predicted hits (includes addr-hits)
+bpred_gshare.updates            886 # total number of updates
+bpred_gshare.addr_hits          426 # total number of address-predicted hits
+bpred_gshare.dir_hits           663 # total number of direction-predicted hits (includes addr-hits)
 bpred_gshare.misses             223 # total number of misses
 bpred_gshare.jr_hits            109 # total number of address-predicted hits for JR's
 bpred_gshare.jr_seen            174 # total number of JR's seen
 bpred_gshare.jr_non_ras_hits.PP           13 # total number of address-predicted hits for non-RAS JR's
 bpred_gshare.jr_non_ras_seen.PP           36 # total number of non-RAS JR's seen
-bpred_gshare.bpred_addr_rate    0.4790 # branch address-prediction rate (i.e., addr-hits/updates)
-bpred_gshare.bpred_dir_rate    0.7475 # branch direction-prediction rate (i.e., all-hits/updates)
+bpred_gshare.bpred_addr_rate    0.4808 # branch address-prediction rate (i.e., addr-hits/updates)
+bpred_gshare.bpred_dir_rate    0.7483 # branch direction-prediction rate (i.e., all-hits/updates)
 bpred_gshare.bpred_jr_rate    0.6264 # JR address-prediction rate (i.e., JR addr-hits/JRs seen)
 bpred_gshare.bpred_jr_non_ras_rate.PP    0.3611 # non-RAS JR addr-pred rate (ie, non-RAS JR hits/JRs seen)
 bpred_gshare.retstack_pushes          195 # total number of address pushed onto ret-addr stack
@@ -253,9 +253,9 @@ ld_stack_size                 16384 # program initial stack size
 ld_prog_entry          0x0120005550 # program entry point (initial PC)
 ld_environ_base        0x011ff97000 # program environment base address address
 ld_target_big_endian              0 # target executable endian-ness, non-zero if big endian
-mem.page_count                   16 # total number of pages allocated
-mem.page_mem                   128k # total size of memory pages allocated
-mem.ptab_misses                 113 # total first level page table misses
-mem.ptab_accesses            234496 # total page table accesses
+mem.page_count                   17 # total number of pages allocated
+mem.page_mem                   136k # total size of memory pages allocated
+mem.ptab_misses                 114 # total first level page table misses
+mem.ptab_accesses            236878 # total page table accesses
 mem.ptab_miss_rate           0.0005 # first level page table miss rate
 
