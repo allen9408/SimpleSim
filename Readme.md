@@ -20,7 +20,8 @@
 
 ### Usage *(for branch prediction only)*
 
-./sim-outorder -bpred {pred_type} -bpred:{bpred_type} {configs} target
+./sim-outorder -bpred {pred_type} -bpred:{bpred_type} {configs} target  
+**Caution: All taken predictor unavailable(*FIXME: sim-outorder.c:4379*)**  
 
 > *Shit-like Interface!*   
 >
