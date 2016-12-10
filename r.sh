@@ -20,7 +20,7 @@ if [[ $pred_type == 'hash' ]]; then
 		#statements
 		bench='test-math'
 	fi
-	./sim-outorder -bpred hash -bpred:hash $hash_size ./tests/bin/$bench
+	./sim-outorder -bpred hash -bpred:hash $hash_size ./tests-alpha/bin/$bench
 elif [[ $pred_type == 'gshare' ]]; then
 	# gshare predictor
 	# 1 parameter: history FIFO size
@@ -34,11 +34,11 @@ elif [[ $pred_type == 'gshare' ]]; then
 		#statements
 		bench='test-math'
 	fi
-	./sim-outorder -bpred gshare -bpred:gshare $fifo_size ./tests/bin/$bench
+	./sim-outorder -bpred gshare -bpred:gshare $fifo_size ./tests-alpha/bin/$bench
 elif [[ $pred_type == '2lev' ]]; then
 	# 2 level predictor
 	# 4 parameters: l1size l2size hist_size xor
-	./sim-outorder -bpred 2lev -bpred:2lev $2 $3 $4 $5 ./tests/bin/test-math
+	./sim-outorder -bpred 2lev -bpred:2lev $2 $3 $4 $5 ./tests-alpha/bin/test-math
 elif [[ $pred_type == 'hodge' ]]; then
 	# hodgepodge predictor
 	# 2 parameters: history_reg_size associativity
@@ -55,5 +55,5 @@ elif [[ $pred_type == 'hodge' ]]; then
 		#statements
 		bench='test-math'
 	fi
-	./sim-outorder -bpred hodge -bpred:hodge $hist_size $assoc ./tests/bin/$bench
+	./sim-outorder -bpred hodge -bpred:hodge $hist_size $assoc ./tests-alpha/bin/$bench
 fi

@@ -21,7 +21,7 @@
 
 ./sim-outorder -bpred {pred_type} -bpred:{bpred_type} {configs} target  
 
-> example:  ./sim-outorder -bpred hash -bpred:hash 256 tests/bin/test-math  
+> example:  ./sim-outorder -bpred hash -bpred:hash 256 tests-alpha/bin/test-math  
 > example:  ./sim-outorder -bpred gshare -bpred:gshare 12 benchmarks/anagram.alpha  
 > example:  ./sim-outorder -bpred hodge -bpred:hodge 11 4 benchmarks/cc1.alpha -O 1stmt.i  
 > Predictors:
@@ -47,7 +47,7 @@
 >     hash: {hash table size}  
 >     gshare: {history FIFO bit-width}  
 >     hodge: {history FIFO bit-width} {associativity}
-> benchmark:	benchmarks in {DIR}/tests/bin/
+> benchmark:	benchmarks in {DIR}/tests-alpha/bin/
 
 ### Hodgepodge Predictor Structure
 
