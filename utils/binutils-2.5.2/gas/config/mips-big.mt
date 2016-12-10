@@ -1,2 +1,0 @@
-TDEFINES=-DTARGET_BYTES_BIG_ENDIAN
-TARG_CPU_DEPENDENTS=$(srcdir)/../include/opcode/mips.h
