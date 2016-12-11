@@ -23,7 +23,7 @@
 
 > example:  ./sim-outorder -bpred hash -bpred:hash 256 tests-alpha/bin/test-math  
 > example:  ./sim-outorder -bpred gshare -bpred:gshare 12 benchmarks/anagram.alpha  
-> example:  ./sim-outorder -bpred hodge -bpred:hodge 11 4 benchmarks/cc1.alpha -O 1stmt.i  
+> example:  ./sim-outorder -bpred hodge -bpred:hodge 11 4 benchmarks/cc1.alpha -O benchmarks/1stmt.i  
 > Predictors:
 > -bpred           bimod 		 # branch predictor type   {nottaken|taken|bimod|2lev|comb|hash|gsahre|hodge}  
 > Predictor configs:
