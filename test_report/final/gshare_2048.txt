@@ -1,0 +1,8 @@
+GCC	bpred_gshare.bpred_dir_rate 0.8329 # branch direction-prediction rate (i.e., all-hits/updates)
+CMP	bpred_gshare.bpred_dir_rate 0.8292 # branch direction-prediction rate (i.e., all-hits/updates)
+ANA	bpred_gshare.bpred_dir_rate 0.7552 # branch direction-prediction rate (i.e., all-hits/updates)
+GO 	bpred_gshare.bpred_dir_rate 0.7040 # branch direction-prediction rate (i.e., all-hits/updates)
+MAT	bpred_gshare.bpred_dir_rate 0.7796 # branch direction-prediction rate (i.e., all-hits/updates)
+DIR	bpred_gshare.bpred_dir_rate 0.7457 # branch direction-prediction rate (i.e., all-hits/updates)
+LLG	bpred_gshare.bpred_dir_rate 0.7862 # branch direction-prediction rate (i.e., all-hits/updates)
+LSW	bpred_gshare.bpred_dir_rate 0.7494 # branch direction-prediction rate (i.e., all-hits/updates)

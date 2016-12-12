@@ -1,0 +1,8 @@
+GCC	bpred_hodge.bpred_dir_rate 0.8994 # branch direction-prediction rate (i.e., all-hits/updates)
+CMP	bpred_hodge.bpred_dir_rate 0.8864 # branch direction-prediction rate (i.e., all-hits/updates)
+ANA	bpred_hodge.bpred_dir_rate 0.8026 # branch direction-prediction rate (i.e., all-hits/updates)
+GO 	bpred_hodge.bpred_dir_rate 0.7898 # branch direction-prediction rate (i.e., all-hits/updates)
+MAT	bpred_hodge.bpred_dir_rate 0.8741 # branch direction-prediction rate (i.e., all-hits/updates)
+DIR	bpred_hodge.bpred_dir_rate 0.8068 # branch direction-prediction rate (i.e., all-hits/updates)
+LLG	bpred_hodge.bpred_dir_rate 0.8697 # branch direction-prediction rate (i.e., all-hits/updates)
+LSW	bpred_hodge.bpred_dir_rate 0.8115 # branch direction-prediction rate (i.e., all-hits/updates)

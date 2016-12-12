@@ -1,0 +1,8 @@
+GCC	bpred_hash.bpred_dir_rate 0.9052 # branch direction-prediction rate (i.e., all-hits/updates)
+CMP	bpred_hash.bpred_dir_rate 0.8965 # branch direction-prediction rate (i.e., all-hits/updates)
+ANA	bpred_hash.bpred_dir_rate 0.7696 # branch direction-prediction rate (i.e., all-hits/updates)
+GO 	bpred_hash.bpred_dir_rate 0.8014 # branch direction-prediction rate (i.e., all-hits/updates)
+MAT	bpred_hash.bpred_dir_rate 0.8659 # branch direction-prediction rate (i.e., all-hits/updates)
+DIR	bpred_hash.bpred_dir_rate 0.7726 # branch direction-prediction rate (i.e., all-hits/updates)
+LLG	bpred_hash.bpred_dir_rate 0.8190 # branch direction-prediction rate (i.e., all-hits/updates)
+LSW	bpred_hash.bpred_dir_rate 0.7630 # branch direction-prediction rate (i.e., all-hits/updates)
